@@ -1,26 +1,73 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Colors — extracted from Figma variables */
+  --surface-brand-primary: #fa5c3b; /* hero orange */
+  --surface-brand-primary-2: #561824; /* deep maroon */
+  --surface-on-cream: #270011; /* footer plum-black */
+  --surface-cream-100: #f5f5f5;
+  --surface-cream-200: #f0ebe6; /* main cream bg */
+  --surface-secondary-yellow: #ffe96a; /* pop-up yellow */
+  --text-on-dark-gray: #fbf7ef;
+  --text-on-white: #270011;
+  --text-brand-secondary-8: #65421f;
+  --stroke-white: #ffffff;
+  --stroke-brand-secondary-yellow: #65421f;
+
+  --grid-margin: 44px;
+  --grid-margin-mobile: 20px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-brand-primary: var(--surface-brand-primary);
+  --color-brand-primary-2: var(--surface-brand-primary-2);
+  --color-on-cream: var(--surface-on-cream);
+  --color-cream-100: var(--surface-cream-100);
+  --color-cream-200: var(--surface-cream-200);
+  --color-secondary-yellow: var(--surface-secondary-yellow);
+  --color-text-on-dark: var(--text-on-dark-gray);
+  --color-text-on-white: var(--text-on-white);
+  --color-text-secondary-8: var(--text-brand-secondary-8);
+
+  --font-display: var(--font-fraunces);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--surface-cream-200);
+  color: var(--text-on-white);
+  font-family: var(--font-fraunces), Georgia, serif;
+}
+
+::selection {
+  background: var(--surface-brand-primary-2);
+  color: var(--text-on-dark-gray);
+}
+
+.eyebrow {
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 0.95;
+  text-transform: none;
+}
+
+.cta-label {
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 1.04;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
