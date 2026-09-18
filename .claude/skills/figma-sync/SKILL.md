@@ -67,24 +67,108 @@ Use the project's existing architecture.
 
 ---
 
-# Step 2 — Inspect Figma
+# Step 2 — Resolve the Target, Then Inspect Figma
 
-Use the configured Figma MCP to inspect the relevant Figma design.
+## Invocation forms
 
-If the user provides a Figma URL, use that URL.
+This skill accepts a target in any of these forms:
 
-If the user identifies a specific:
+1. **`<page name>/<frame name>`** — e.g. `/figma-sync Marketing/Hero`.
+   Split on the *first* `/`. Everything before it is the page name,
+   everything after is the frame (or top-level node) name.
+2. **`<frame name>` alone** — e.g. `/figma-sync Hero`. No page given;
+   search every page in the file for a matching top-level node.
+3. **A full Figma URL** — use its `node-id` and file key directly, no
+   name resolution needed.
+4. **Nothing** — no page/frame/URL given. Do not guess. Ask the user
+   which page/frame or URL to sync, listing the file's top-level pages
+   (from the lookup below) as options.
 
-- page
-- frame
-- section
-- component
-- screen
-- variant
+A full URL (form 3) always wins if one is given, even alongside a
+page/frame string.
 
-inspect that area first.
+## Which Figma file
 
-Determine the relevant:
+Read `.claude/figma-sync.config.json` for `defaultFileKey` (and
+`defaultFileUrl`, for reference/links back to the user). Use that file
+key for all lookups unless the user's invocation includes a full URL
+pointing at a different file, in which case use that file's key
+instead. If neither the config nor the invocation supplies a file key,
+ask the user for the Figma file URL before doing anything else.
+
+## Resolution order
+
+Resolve a `<page name>/<frame name>` or `<frame name>` target in this
+order — do not skip straight to live discovery if an earlier step can
+answer it, and do not re-ask the user for a URL once it's cached:
+
+1. **Full URL given?** Use its file key and `node-id` directly. Skip
+   name resolution entirely, but still do the cache write-back below
+   so future invocations of this same target don't need the URL again.
+2. **Check `.claude/figma-map.json` first.** This file is a cache of
+   every page/frame name this skill has previously resolved, keyed
+   exactly like the invocation syntax (`pages.<page>.id`,
+   `pages.<page>.frames.<frame>`). Match the given name(s) against it
+   case-insensitively before making any Figma API call. If found, use
+   that node ID directly — this is the common case after the first
+   sync of any given page, and it is immune to the staleness problem
+   in step 3.
+3. **Not in the cache — live discovery.** Only now call the Figma
+   MCP's metadata lookup with no node ID to list the file's top-level
+   pages, then (for the matching page or all pages if none was named)
+   list that page's top-level children, matching names case-
+   insensitively (exact match preferred, then substring) exactly as
+   before. If zero or more than one candidate matches at either step,
+   stop and ask the user to disambiguate — never guess.
+
+   **Known caveat:** the "list pages" and "list top-level children"
+   lookups can return stale/cached results that lag behind a page or
+   frame *just* added in Figma — a node can already be fetchable
+   directly by ID while it's still missing from these listing calls.
+   So a zero-match result here is *not* proof the page/frame doesn't
+   exist, only that it isn't in the cache and isn't in the (possibly
+   stale) live listing. Say exactly that to the user, rather than
+   asserting the page/frame doesn't exist, and ask for the URL as a
+   one-time fallback (step 4) instead of giving up.
+4. **Still not found — ask for the URL once.** Tell the user what you
+   searched (cache + live listing) and ask them to paste the Figma URL
+   for that page/frame. This should only ever be needed the first time
+   a given page/frame is referenced.
+
+This order is required specifically because it avoids hardcoding or
+memorizing node IDs up front (names are what the user actually knows
+and typed), while avoiding repeated live lookups and repeated URL
+requests for anything already seen once.
+
+## Keep the cache fresh
+
+Whenever a target is resolved via step 1 (URL) or step 3 (live
+discovery) — i.e. anything *not* already served from the cache in step
+2 — update `.claude/figma-map.json` before moving on:
+
+- Add or update the page's entry (`pages.<page name>.id`) using the
+  page's actual Figma name as the key.
+- Add or update the frame's entry under that page's `frames` map, keyed
+  by the frame's actual Figma name.
+- If the resolved URL/discovery is for a file other than the cache's
+  `fileKey`, do not merge it into this cache — a cache keyed by name
+  only makes sense for a single file. Tell the user their invocation
+  targeted a different Figma file than the one this project is
+  configured for (`.claude/figma-sync.config.json`), and ask whether
+  the config should be updated to point at the new file instead.
+- If a cached ID turns out to be stale (a lookup on it 404s or returns
+  "node not found" — e.g. the frame was deleted or moved to a
+  different file), remove that entry from the cache, re-resolve via
+  live discovery or by asking the user, and write the corrected entry
+  back.
+
+This write-back is what makes "paste the Figma link" a one-time cost
+per page/frame rather than a per-invocation one.
+
+## Inspecting the resolved node
+
+Once a single node is resolved (by name or by URL), determine the
+relevant:
 
 - layout
 - dimensions

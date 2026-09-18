@@ -1,0 +1,23 @@
+{
+  "_comment": "Cache of resolved Figma page/frame names to node IDs, maintained by the figma-sync skill. Read first on every invocation so a name only ever needs live discovery (or a pasted URL) once. Figma's 'list pages' endpoint can lag behind newly-added pages/frames, so this file is the source of truth for names already seen, even when the live listing hasn't caught up yet. If a cached ID ever 404s (node deleted/moved), remove that entry, re-resolve, and rewrite it.",
+  "fileKey": "dy2Mmgepz3NvcUvcalXUhF",
+  "pages": {
+    "homepage": {
+      "id": "0:1",
+      "frames": {
+        "Homepage": "1:956",
+        "Hero animation": "8:430"
+      }
+    },
+    "about": {
+      "id": "16:454",
+      "frames": {
+        "About": "16:1266",
+        "About v2": "16:1038",
+        "Scrolling About Moduls": "16:660",
+        "Intro": "16:720",
+        "Hero Content": "16:799"
+      }
+    }
+  }
+}
